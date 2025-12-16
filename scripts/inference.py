@@ -52,63 +52,53 @@ def main(config, args):
         audio_feat_length=config.data.audio_feat_length,
     )
 
-    # FIXED: Load VAE locally with proper path resolution
-    # Get the base directory (where the extension is located)
-    if hasattr(args, 'extension_dir'):
-        base_dir = args.extension_dir
-    else:
-        # Fallback: try to determine from script location
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        base_dir = os.path.dirname(script_dir)  # Go up one level from scripts/ to extension root
-    
-    # Try multiple VAE locations in order of preference
-    vae_locations = [
-        # New vae folder structure
-        os.path.join(base_dir, "checkpoints", "vae", "sd-vae-ft-mse.safetensors"),
-        os.path.join(base_dir, "checkpoints", "vae"),  # Directory with config.json
-        # Original locations
-        os.path.join(base_dir, "checkpoints", "sd-vae-ft-mse.safetensors"),
-        os.path.join(base_dir, "checkpoints", "sd-vae-ft-mse"),
-    ]
-    
+    # Load VAE - try HuggingFace first (same as original project), then fallback to local
     vae = None
-    for vae_path in vae_locations:
-        if os.path.exists(vae_path):
-            try:
-                if vae_path.endswith('.safetensors'):
-                    print(f"Attempting to load VAE from safetensors file: {vae_path}")
-                    vae = AutoencoderKL.from_single_file(vae_path, torch_dtype=dtype)
-                elif os.path.isdir(vae_path):
-                    print(f"Attempting to load VAE from directory: {vae_path}")
-                    vae = AutoencoderKL.from_pretrained(vae_path, torch_dtype=dtype, local_files_only=True)
-                
-                if vae is not None:
-                    print(f"✓ Successfully loaded VAE from: {vae_path}")
-                    break
-            except Exception as e:
-                print(f"Failed to load VAE from {vae_path}: {str(e)}")
-                vae = None  # Reset vae to None if loading failed
-                continue
-    
-    if vae is None:
-        print("Local VAE not found in any location, creating VAE with standard configuration")
-        print(f"Searched locations: {vae_locations}")
-        # Create VAE with standard SD configuration if local model doesn't exist
-        vae = AutoencoderKL(
-            in_channels=3,
-            out_channels=3,
-            down_block_types=["DownEncoderBlock2D", "DownEncoderBlock2D", "DownEncoderBlock2D", "DownEncoderBlock2D"],
-            up_block_types=["UpDecoderBlock2D", "UpDecoderBlock2D", "UpDecoderBlock2D", "UpDecoderBlock2D"],
-            block_out_channels=[128, 256, 512, 512],
-            layers_per_block=2,
-            act_fn="silu",
-            latent_channels=4,
-            norm_num_groups=32,
-            sample_size=512,
-        ).to(dtype=dtype)
-        print("⚠️  Using default VAE configuration - consider downloading VAE model locally for better results")
+    try:
+        # First try to load from HuggingFace (same as original project)
+        print("Attempting to load VAE from HuggingFace: stabilityai/sd-vae-ft-mse")
+        vae = AutoencoderKL.from_pretrained("stabilityai/sd-vae-ft-mse", torch_dtype=dtype)
+        print("✓ Successfully loaded VAE from HuggingFace")
+    except Exception as e:
+        print(f"Failed to load VAE from HuggingFace: {str(e)}")
+        print("Trying to load VAE from local checkpoints...")
+        
+        # Fallback to local loading
+        if hasattr(args, 'extension_dir'):
+            base_dir = args.extension_dir
+        else:
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            base_dir = os.path.dirname(script_dir)
+        
+        vae_locations = [
+            os.path.join(base_dir, "checkpoints", "vae"),
+            os.path.join(base_dir, "checkpoints", "vae", "sd-vae-ft-mse.safetensors"),
+            os.path.join(base_dir, "checkpoints", "sd-vae-ft-mse.safetensors"),
+            os.path.join(base_dir, "checkpoints", "sd-vae-ft-mse"),
+        ]
+        
+        for vae_path in vae_locations:
+            if os.path.exists(vae_path):
+                try:
+                    if vae_path.endswith('.safetensors'):
+                        print(f"Attempting to load VAE from safetensors file: {vae_path}")
+                        vae = AutoencoderKL.from_single_file(vae_path, torch_dtype=dtype)
+                    elif os.path.isdir(vae_path):
+                        print(f"Attempting to load VAE from directory: {vae_path}")
+                        vae = AutoencoderKL.from_pretrained(vae_path, torch_dtype=dtype, local_files_only=True)
+                    
+                    if vae is not None:
+                        print(f"✓ Successfully loaded VAE from: {vae_path}")
+                        break
+                except Exception as e:
+                    print(f"Failed to load VAE from {vae_path}: {str(e)}")
+                    vae = None
+                    continue
+        
+        if vae is None:
+            raise RuntimeError("Failed to load VAE from both HuggingFace and local locations. Please ensure VAE model is available.")
 
-    # Set VAE configuration
+    # Set VAE configuration (same as original project)
     vae.config.scaling_factor = 0.18215
     vae.config.shift_factor = 0
 
@@ -128,10 +118,12 @@ def main(config, args):
         scheduler=scheduler,
     ).to("cuda")
 
-    # use DeepCache
+    # use DeepCache with configurable cache_interval for memory optimization
+    cache_interval = getattr(args, 'cache_interval', 3)
     helper = DeepCacheSDHelper(pipe=pipeline)
-    helper.set_params(cache_interval=3, cache_branch_id=0)
+    helper.set_params(cache_interval=cache_interval, cache_branch_id=0)
     helper.enable()
+    print(f"✓ DeepCache enabled with cache_interval={cache_interval}")
 
     if args.seed != -1:
         set_seed(args.seed)

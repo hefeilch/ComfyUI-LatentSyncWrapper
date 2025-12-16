@@ -12,7 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import mediapipe as mp
+# MediaPipe has been disabled to avoid numpy compatibility issues
+# This script is only used for data preprocessing and does NOT affect ComfyUI inference
+# If you need to use this script, uncomment the mediapipe code below or use an alternative face detector
+
+# import mediapipe as mp
 from latentsync.utils.util import read_video
 import os
 import tqdm
@@ -36,29 +40,33 @@ def gather_video_paths(input_dir, output_dir, resolution):
 
 class FaceDetector:
     def __init__(self, resolution=256):
-        self.face_detection = mp.solutions.face_detection.FaceDetection(
-            model_selection=0, min_detection_confidence=0.5
+        # MediaPipe code commented out - uncomment if needed for preprocessing
+        # self.face_detection = mp.solutions.face_detection.FaceDetection(
+        #     model_selection=0, min_detection_confidence=0.5
+        # )
+        raise NotImplementedError(
+            "MediaPipe face detection has been disabled to avoid numpy compatibility issues. "
+            "This script is only used for data preprocessing and does NOT affect ComfyUI inference. "
+            "If you need to use this preprocessing script, please install mediapipe or use an alternative face detector."
         )
         self.resolution = resolution
 
     def detect_face(self, image):
-        height, width = image.shape[:2]
-        # Process the image and detect faces.
-        results = self.face_detection.process(image)
-
-        if not results.detections:  # Face not detected
-            raise Exception("Face not detected")
-
-        if len(results.detections) != 1:
-            return False
-        detection = results.detections[0]  # Only use the first face in the image
-
-        bounding_box = detection.location_data.relative_bounding_box
-        face_width = int(bounding_box.width * width)
-        face_height = int(bounding_box.height * height)
-        if face_width < self.resolution or face_height < self.resolution:
-            return False
-        return True
+        # MediaPipe code commented out
+        # height, width = image.shape[:2]
+        # results = self.face_detection.process(image)
+        # if not results.detections:
+        #     raise Exception("Face not detected")
+        # if len(results.detections) != 1:
+        #     return False
+        # detection = results.detections[0]
+        # bounding_box = detection.location_data.relative_bounding_box
+        # face_width = int(bounding_box.width * width)
+        # face_height = int(bounding_box.height * height)
+        # if face_width < self.resolution or face_height < self.resolution:
+        #     return False
+        # return True
+        raise NotImplementedError("Face detection disabled")
 
     def detect_video(self, video_path):
         video_frames = read_video(video_path, change_fps=False)
@@ -70,7 +78,9 @@ class FaceDetector:
         return True
 
     def close(self):
-        self.face_detection.close()
+        # MediaPipe cleanup commented out
+        # self.face_detection.close()
+        pass
 
 
 def filter_video(video_input, video_out, resolution):

@@ -448,6 +448,8 @@ class LatentSyncNode:
                     "seed": ("INT", {"default": 1247}),
                     "lips_expression": ("FLOAT", {"default": 1.5, "min": 1.0, "max": 3.0, "step": 0.1}),
                     "inference_steps": ("INT", {"default": 20, "min": 1, "max": 999, "step": 1}),
+                    "num_frames": ("INT", {"default": 16, "min": 4, "max": 32, "step": 4, "tooltip": "批处理帧数，降低可减少显存占用（推荐：低显存8，中显存12，高显存16）"}),
+                    "cache_interval": ("INT", {"default": 3, "min": 1, "max": 10, "step": 1, "tooltip": "DeepCache缓存间隔，增大可减少显存占用但可能略微降低质量（推荐：低显存5，中高显存3）"}),
                  },}
 
     CATEGORY = "LatentSyncNode"
@@ -467,7 +469,7 @@ class LatentSyncNode:
                 processed_batch = processed_batch[..., :3]
             return processed_batch
 
-    def inference(self, images, audio, seed, lips_expression=1.5, inference_steps=20):
+    def inference(self, images, audio, seed, lips_expression=1.5, inference_steps=20, num_frames=16, cache_interval=3):
         # Use our module temp directory
         global MODULE_TEMP_DIR
         
@@ -621,6 +623,11 @@ class LatentSyncNode:
             if hasattr(config, "data") and hasattr(config.data, "mask_image_path"):
                 config.data.mask_image_path = mask_image_path
 
+            # 更新 config 中的 num_frames（如果用户指定了不同的值）
+            if hasattr(config, "data") and hasattr(config.data, "num_frames"):
+                config.data.num_frames = num_frames
+                print(f"Using num_frames={num_frames} for memory optimization")
+
             args = argparse.Namespace(
                 unet_config_path=config_path,
                 inference_ckpt_path=ckpt_path,
@@ -636,7 +643,8 @@ class LatentSyncNode:
                 batch_size=BATCH_SIZE,
                 use_mixed_precision=use_mixed_precision,
                 temp_dir=temp_dir,
-                mask_image_path=mask_image_path
+                mask_image_path=mask_image_path,
+                cache_interval=cache_interval  # 添加 cache_interval 参数
             )
 
             # Set PYTHONPATH to include our directories 

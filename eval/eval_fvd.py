@@ -12,7 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import mediapipe as mp
+# MediaPipe has been disabled to avoid numpy compatibility issues
+# This script is only used for evaluation and does NOT affect ComfyUI inference
+# If you need to use this evaluation script, uncomment the mediapipe code below or use an alternative face detector
+
+# import mediapipe as mp
 import cv2
 from decord import VideoReader
 import os
@@ -24,32 +28,34 @@ from eval.fvd import compute_our_fvd
 
 class FVD:
     def __init__(self, resolution=(224, 224)):
-        self.face_detector = mp.solutions.face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5)
+        # MediaPipe code commented out - uncomment if needed for evaluation
+        # self.face_detector = mp.solutions.face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5)
+        raise NotImplementedError(
+            "MediaPipe face detection has been disabled to avoid numpy compatibility issues. "
+            "This script is only used for evaluation and does NOT affect ComfyUI inference. "
+            "If you need to use this evaluation script, please install mediapipe or use an alternative face detector."
+        )
         self.resolution = resolution
 
     def detect_face(self, image):
-        height, width = image.shape[:2]
-        # Process the image and detect faces.
-        results = self.face_detector.process(image)
-
-        if not results.detections:  # Face not detected
-            raise RuntimeError("Face not detected")
-
-        detection = results.detections[0]  # Only use the first face in the image
-        bounding_box = detection.location_data.relative_bounding_box
-        xmin = int(bounding_box.xmin * width)
-        ymin = int(bounding_box.ymin * height)
-        face_width = int(bounding_box.width * width)
-        face_height = int(bounding_box.height * height)
-
-        # Crop the image to the bounding box.
-        xmin = max(0, xmin)
-        ymin = max(0, ymin)
-        xmax = min(width, xmin + face_width)
-        ymax = min(height, ymin + face_height)
-        image = image[ymin:ymax, xmin:xmax]
-
-        return image
+        # MediaPipe code commented out
+        # height, width = image.shape[:2]
+        # results = self.face_detector.process(image)
+        # if not results.detections:
+        #     raise RuntimeError("Face not detected")
+        # detection = results.detections[0]
+        # bounding_box = detection.location_data.relative_bounding_box
+        # xmin = int(bounding_box.xmin * width)
+        # ymin = int(bounding_box.ymin * height)
+        # face_width = int(bounding_box.width * width)
+        # face_height = int(bounding_box.height * height)
+        # xmin = max(0, xmin)
+        # ymin = max(0, ymin)
+        # xmax = min(width, xmin + face_width)
+        # ymax = min(height, ymin + face_height)
+        # image = image[ymin:ymax, xmin:xmax]
+        # return image
+        raise NotImplementedError("Face detection disabled")
 
     def detect_video(self, video_path):
         vr = VideoReader(video_path)

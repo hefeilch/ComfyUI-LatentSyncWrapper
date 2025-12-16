@@ -1,5 +1,4 @@
 diffusers
-mediapipe>=0.10.8
 transformers
 huggingface-hub>=0.10.0
 omegaconf

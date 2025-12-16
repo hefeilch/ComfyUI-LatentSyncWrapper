@@ -69,7 +69,6 @@ huggingface-hub
 omegaconf
 einops
 opencv-python
-mediapipe
 face-alignment
 decord
 ffmpeg-python
@@ -77,6 +76,8 @@ safetensors
 soundfile
 DeepCache
 ```
+
+**Note**: MediaPipe has been removed from dependencies to avoid numpy compatibility issues. The preprocessing scripts now use OpenCV's built-in face detection (Haar Cascade) or DNN face detector as a replacement.
 
 ## Manual Model Download Required
 

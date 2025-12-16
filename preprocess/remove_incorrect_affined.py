@@ -12,7 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import mediapipe as mp
+# MediaPipe has been disabled to avoid numpy compatibility issues
+# This script is only used for data preprocessing and does NOT affect ComfyUI inference
+# If you need to use this script, uncomment the mediapipe code below or use an alternative face detector
+
+# import mediapipe as mp
 from latentsync.utils.util import read_video, gather_video_paths_recursively
 import os
 import tqdm
@@ -21,20 +25,25 @@ from multiprocessing import Pool
 
 class FaceDetector:
     def __init__(self):
-        self.face_detection = mp.solutions.face_detection.FaceDetection(
-            model_selection=0, min_detection_confidence=0.5
+        # MediaPipe code commented out - uncomment if needed for preprocessing
+        # self.face_detection = mp.solutions.face_detection.FaceDetection(
+        #     model_selection=0, min_detection_confidence=0.5
+        # )
+        raise NotImplementedError(
+            "MediaPipe face detection has been disabled to avoid numpy compatibility issues. "
+            "This script is only used for data preprocessing and does NOT affect ComfyUI inference. "
+            "If you need to use this preprocessing script, please install mediapipe or use an alternative face detector."
         )
 
     def detect_face(self, image):
-        # Process the image and detect faces.
-        results = self.face_detection.process(image)
-
-        if not results.detections:  # Face not detected
-            return False
-
-        if len(results.detections) != 1:
-            return False
-        return True
+        # MediaPipe code commented out
+        # results = self.face_detection.process(image)
+        # if not results.detections:
+        #     return False
+        # if len(results.detections) != 1:
+        #     return False
+        # return True
+        raise NotImplementedError("Face detection disabled")
 
     def detect_video(self, video_path):
         try:
@@ -50,7 +59,9 @@ class FaceDetector:
         return True
 
     def close(self):
-        self.face_detection.close()
+        # MediaPipe cleanup commented out
+        # self.face_detection.close()
+        pass
 
 
 def remove_incorrect_affined(video_path):

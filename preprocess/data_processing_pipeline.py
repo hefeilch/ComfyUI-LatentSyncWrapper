@@ -17,12 +17,14 @@ import os
 from preprocess.affine_transform import affine_transform_multi_gpus
 from preprocess.remove_broken_videos import remove_broken_videos_multiprocessing
 from preprocess.detect_shot import detect_shot_multiprocessing
-from preprocess.filter_high_resolution import filter_high_resolution_multiprocessing
+# MediaPipe-dependent scripts disabled - uncomment if needed for preprocessing
+# from preprocess.filter_high_resolution import filter_high_resolution_multiprocessing
 from preprocess.resample_fps_hz import resample_fps_hz_multiprocessing
 from preprocess.segment_videos import segment_videos_multiprocessing
 from preprocess.sync_av import sync_av_multi_gpus
 from preprocess.filter_visual_quality import filter_visual_quality_multi_gpus
-from preprocess.remove_incorrect_affined import remove_incorrect_affined_multiprocessing
+# MediaPipe-dependent scripts disabled - uncomment if needed for preprocessing
+# from preprocess.remove_incorrect_affined import remove_incorrect_affined_multiprocessing
 from latentsync.utils.util import check_model_and_download
 
 
